@@ -42,9 +42,11 @@ validationcache_t *validationcache_create(const char *vstr)
         int next;
         while ((next = validation_findcommand(vstr + start, Validation_EnumerateAll, &len)) != Validation_NotFound)
         {
-            const char *p = &vstr[next];
+            const char *p = &vstr[start + next];
             char cmd = *p++;
-            if (cmd >= 'a' || cmd <= 'z')
+
+            next = start + next + len;
+            if (cmd >= 'a' && cmd <= 'z')
                 cmd = cmd - 32;
             if (cmd >= 'A' && cmd <= 'Z')
             {
@@ -57,7 +59,7 @@ validationcache_t *validationcache_create(const char *vstr)
                 switch (cmd)
                 {
                     case WimpValidation_Allow:            /* 'A': Allow following chars */
-                        vc->allow_offset = next + 1; /* FIXME: Should we store the length too ? */
+                        vc->allow_offset = p - vstr; /* FIXME: Should we store the length too ? */
                         break;
 
                     case WimpValidation_InterfaceModule:  /* 'B': Border type used by interface module */
@@ -97,7 +99,7 @@ validationcache_t *validationcache_create(const char *vstr)
                         break;
 
                     case WimpValidation_Key:              /* 'K': Allow wimp key processing */
-                        vc->key_offset = next + 1; /* FIXME: Should we store the length too ? */
+                        vc->key_offset = p - vstr; /* FIXME: Should we store the length too ? */
                         break;
 
                     case WimpValidation_Line:             /* 'L': Set line spacing in OS units */
@@ -112,7 +114,7 @@ validationcache_t *validationcache_create(const char *vstr)
                         break;
 
                     case WimpValidation_Pointer:          /* 'P': Set pointer from sprite name and active posn */
-                        vc->pointer_offset = next + 1; /* FIXME: Should we store the length too ? */
+                        vc->pointer_offset = p - vstr; /* FIXME: Should we store the length too ? */
                         break;
 
                     case WimpValidation_Border:           /* 'R': Border type */
@@ -160,7 +162,7 @@ validationcache_t *validationcache_create(const char *vstr)
                         break;
 
                     case WimpValidation_Sprite:           /* 'S': Sprite name */
-                        vc->sprite_on_offset = next + 1;
+                        vc->sprite_on_offset = p - vstr;
                         while (len-- > 1)
                         {
                             char c = *p++;
@@ -208,6 +210,8 @@ validationcache_t *validationcache_create(const char *vstr)
                         break;
                 }
             }
+            start = next;
         }
     }
+    return vc;
 }

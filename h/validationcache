@@ -41,6 +41,7 @@ typedef struct validationcache_s {
         bool sprite:1;      // 'S'
         bool unused_t:1;
         bool unused_u:1;
+        bool unused_v:1;
         bool unused_w:1;
         bool unused_x:1;
         bool flags:1;       // 'Y'
@@ -69,5 +70,13 @@ typedef struct validationcache_s {
 struct validationcache_size_assertion {
     char validationcache_size[sizeof(((validationcache_t*)NULL)->valid) <= sizeof(uint32_t) ? 1 : -1];
 };
+
+/*************************************************** Gerph *********
+ Function:      validationcache_create
+ Description:   Create a cache entry for a validation string
+ Parameters:    vstr-> pointer to a validation string (ctrl-terminated)
+ Returns:       pointer to a cache structure or NULL if failed to allocate
+ ******************************************************************/
+validationcache_t *validationcache_create(const char *vstr);
 
 #endif

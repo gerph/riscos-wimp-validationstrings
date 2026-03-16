@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "validation.h"
+#include "validationcache.h"
 
 #include "VersionNum"
 
@@ -77,6 +78,10 @@ void test_findcommand(void)
         else \
             nfail++;
 
+    printf("----\n");
+    printf("Find command\n");
+    printf("----\n\n");
+
     TEST_FINDCOMMAND("Soff,on", 'S', "Soff,on");
     TEST_FINDCOMMAND("Soff,on", 's', "Soff,on");
     TEST_FINDCOMMAND("Soff,on", 'Y', NULL);
@@ -98,11 +103,46 @@ void test_findcommand(void)
 }
 
 
+void test_checkcache(void)
+{
+    validationcache_t *vc;
+
+#define STRINGIFY(field) #field
+#define TEST_CHECKCACHE_BOOL(s, field, state) \
+        printf("Checking '%s' field '%s': ", s, STRINGIFY(field)); \
+        vc = validationcache_create(s); \
+        if (vc == NULL) { \
+            nfail++; \
+            printf("FAILED (couldn't allocate)\n"); \
+        } \
+        else { \
+            if (vc->valid.field == state) { \
+                printf("field was %s\n", state ? "set" : "not set"); \
+                npass++; \
+            } \
+            else { \
+                printf("FAILED (field was %s)\n", vc->valid.field ? "set" : "not set"); \
+                nfail++; \
+            } \
+        }
+
+    printf("\n\n----\n");
+    printf("Check cache command\n");
+    printf("----\n\n");
+
+    TEST_CHECKCACHE_BOOL("Soff,on", sprite, true);
+    TEST_CHECKCACHE_BOOL("Soff,on", allow, false);
+    TEST_CHECKCACHE_BOOL("Soff,on;YA", flags, true);
+    TEST_CHECKCACHE_BOOL("Soff,on;YA;AA-Z", allow, true);
+}
+
+
 int main(int argc, char *argv[])
 {
     test_findcommand();
+    test_checkcache();
 
-    printf("----\n");
+    printf("\n----\n");
     printf("Pass:  %i\n", npass);
     printf("Fail:  %i\n", nfail);
 
