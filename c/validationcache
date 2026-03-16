@@ -1,0 +1,213 @@
+/*******************************************************************
+ * File:        cache
+ * Purpose:     Caching for the validation strings for icons
+ * Author:      Gerph
+ * Date:        16 Mar 2026
+ ******************************************************************/
+
+/* This is an experiment to see if caching the validation strings might
+ * be a useful operation.
+ *
+ * Principles:
+ *  Some keys are requested more than others (rendering ones)
+ *  Some strings can be decoded once and not referred to again.
+ *  Some strings will be long and should not be processed.
+ *  Validation strings may need to be re-cached.
+ */
+
+#include <stdlib.h>
+#include <string.h>
+
+#include "validationcache.h"
+#include "validation.h"
+
+/*************************************************** Gerph *********
+ Function:      validationcache_create
+ Description:   Create a cache entry for a validation string
+ Parameters:    vstr-> pointer to a validation string (ctrl-terminated)
+ Returns:       pointer to a cache structure or NULL if failed to allocate
+ ******************************************************************/
+validationcache_t *validationcache_create(const char *vstr)
+{
+    validationcache_t *vc;
+    vc = malloc(sizeof(*vc));
+    if (vc == NULL)
+        return NULL;
+
+    /* We've got to parse the things that are in the cache now */
+    memset(vc, 0, sizeof(*vc));
+    {
+        int start = 0;
+        int len;
+        int next;
+        while ((next = validation_findcommand(vstr + start, Validation_EnumerateAll, &len)) != Validation_NotFound)
+        {
+            const char *p = &vstr[next];
+            char cmd = *p++;
+            if (cmd >= 'a' || cmd <= 'z')
+                cmd = cmd - 32;
+            if (cmd >= 'A' && cmd <= 'Z')
+            {
+                /* This is a character command, so we can mark it present in the boolean table */
+                /* NOTE: We're assuming that the bitfield is numbered from lowest bit 0 */
+                uint32_t *bitfield = (uint32_t*)&vc->valid;
+                *bitfield |= (1<<(cmd-'A'));
+
+                /* Now perform interpretation on the field */
+                switch (cmd)
+                {
+                    case WimpValidation_Allow:            /* 'A': Allow following chars */
+                        vc->allow_offset = next + 1; /* FIXME: Should we store the length too ? */
+                        break;
+
+                    case WimpValidation_InterfaceModule:  /* 'B': Border type used by interface module */
+                        break;
+
+                    case WimpValidation_Colour:           /* 'C': Select icon colours (in 24-bit) */
+                        /* FIXME: Not implemented */
+                        break;
+
+                    case WimpValidation_Display:          /* 'D': Display char following for password */
+                        {
+                            char c = len > 1 ? *p++ : 0;
+                            if (c == '\\')
+                                c = *p;
+                            vc->display_char = c;
+                        }
+                        break;
+
+                    case WimpValidation_Font:             /* 'F': Select font foreground/background hex colours */
+                        vc->font_wimpbg = WimpColour_None;
+                        vc->font_wimpfg = WimpColour_None;
+                        if (len == 3)
+                        {
+                            /* Only populate if the length is exactly 2 chars */
+                            char c = *p++;
+                            if (c >= '0' && c <= '9')
+                                vc->font_wimpbg = c - '0'; /* 0-9 */
+                            else if ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
+                                vc->font_wimpbg = (c & 31) + 9; /* 10-15 */
+
+                            c = *p++;
+                            if (c >= '0' && c <= '9')
+                                vc->font_wimpfg = c - '0'; /* 0-9 */
+                            else if ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
+                                vc->font_wimpfg = (c & 31) + 9; /* 10-15 */
+                        }
+                        break;
+
+                    case WimpValidation_Key:              /* 'K': Allow wimp key processing */
+                        vc->key_offset = next + 1; /* FIXME: Should we store the length too ? */
+                        break;
+
+                    case WimpValidation_Line:             /* 'L': Set line spacing in OS units */
+                        /* FIXME: Not extracted yet */
+                        break;
+
+                    case WimpValidation_Matrix:           /* 'M': Matrix operations */
+                        /* FIXME: Not extracted yet */
+                        break;
+
+                    case WimpValidation_Name:             /* 'N': Used by various template editors */
+                        break;
+
+                    case WimpValidation_Pointer:          /* 'P': Set pointer from sprite name and active posn */
+                        vc->pointer_offset = next + 1; /* FIXME: Should we store the length too ? */
+                        break;
+
+                    case WimpValidation_Border:           /* 'R': Border type */
+                        {
+                            char c = *p++;
+                            if (len-- > 1 && c >= '0' && c <= '9')
+                            {
+                                char c = *p++;
+                                int border_type = c - '0';
+                                while (len-- > 1)
+                                {
+                                    c = *p++;
+                                    if (c >= '0' && c <= '9')
+                                    {
+                                        border_type *= 10;
+                                        border_type += c - '0';
+                                    }
+                                    else
+                                        break;
+                                }
+                                vc->border_type = border_type;
+                                vc->border_slabin = WimpColour_None;
+
+                                if (len > 1 && c == ',')
+                                {
+                                    /* There is a second parameter, which is also a decimal */
+                                    int colour = 0;
+                                    while (len-- > 1)
+                                    {
+                                        c = *p++;
+                                        if (c >= '0' && c <= '9')
+                                        {
+                                            colour *= 10;
+                                            colour += c - '0';
+                                        }
+                                        else
+                                        {
+                                            break;
+                                        }
+                                    }
+                                    colour = colour < 16 ? colour : WimpColour_None;
+                                }
+                            }
+                        }
+                        break;
+
+                    case WimpValidation_Sprite:           /* 'S': Sprite name */
+                        vc->sprite_on_offset = next + 1;
+                        while (len-- > 1)
+                        {
+                            char c = *p++;
+                            if (c == ',')
+                            {
+                                vc->sprite_off_offset = p - vstr;
+                                break;
+                            }
+                            if (c=='\\')
+                            {
+                                len--; p++;
+                            }
+                        }
+                        break;
+
+                    case WimpValidation_Tint:             /* 'T': Tinting sprites */
+                        /* FIXME: Not extracted yet */
+                        break;
+
+                    case WimpValidation_CharLimit:        /* 'U': Max number of Unicode characters allowed */
+                        break;
+
+                    case WimpValidation_NoAuto:           /* 'X': wimp doesn't auto size iconbar icons */
+                        break;
+
+                    case WimpValidation_Flag:             /* 'Y': Flag operation */
+                        {
+                            uint32_t flags = 0;
+                            while (len-- > 1)
+                            {
+                                char c = *p++;
+                                if (c == '\\')
+                                {
+                                    c = *p++;
+                                    len--;
+                                }
+                                if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+                                    flags |= (1<<((c&31)-1));
+                            }
+                            vc->flags = flags;
+                        }
+                        break;
+
+                    case WimpValidation_Border300:        /* 'Z': RISC OS 3.00 border (replaced by 'R') */
+                        break;
+                }
+            }
+        }
+    }
+}

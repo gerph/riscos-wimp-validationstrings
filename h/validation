@@ -1,0 +1,57 @@
+/*******************************************************************
+ * File:        validation
+ * Purpose:     Find that validation strings
+ * Author:      Gerph
+ * Date:        16 Mar 2026
+ ******************************************************************/
+
+#ifndef VALIDATION_H
+#define VALIDATION_H
+
+#define Validation_NotFound         (-1) /* Returned when not found/no more */
+#define Validation_EnumerateAll     (0)  /* Enumeration of all the tags */
+
+// Validation string commands
+typedef enum wimpvalidation_e {
+    WimpValidation_Allow            = 'A',  /* Allow following chars */
+    WimpValidation_InterfaceModule  = 'B',  /* Border type used by interface module */
+    WimpValidation_Colour           = 'C',  /* Select icon colours (in 24-bit) */
+    WimpValidation_Display          = 'D',  /* Display char following for password */
+    WimpValidation_Font             = 'F',  /* Select font foreground/background hex colours */
+    WimpValidation_Key              = 'K',  /* Allow wimp key processing */
+    WimpValidation_Line             = 'L',  /* Set line spacing in OS units */
+    WimpValidation_Matrix           = 'M',  /* Matrix operations */
+    WimpValidation_Name             = 'N',  /* Used by various template editors */
+    WimpValidation_Pointer          = 'P',  /* Set pointer from sprite name and active posn */
+    WimpValidation_Border           = 'R',  /* Border type */
+    WimpValidation_Sprite           = 'S',  /* Sprite name */
+    WimpValidation_Tint             = 'T',  /* Tinting sprites */
+    WimpValidation_CharLimit        = 'U',  /* Max number of Unicode characters allowed */
+    WimpValidation_NoAuto           = 'X',  /* wimp doesn't auto size iconbar icons */
+    WimpValidation_Flag             = 'Y',  /* Flag operation */
+    WimpValidation_Border300        = 'Z'   /* RISC OS 3.00 border (replaced by 'R') */
+} wimpvalidation_t;
+
+// Validation 'K' sequences
+typedef enum wimpvalidation_k_e {
+    WimpValidationKey_NoClipboard   = 'C',  /* Don't handle clipboard */
+    WimpValidationKey_Return        = 'R',  /* Handle return key */
+    WimpValidationKey_Arrow         = 'A',  /* Handle arrow keys */
+    WimpValidationKey_Tab           = 'T',  /* Handle tab key */
+    WimpValidationKey_Edit          = 'D',  /* Notify task of editing keys */
+    WimpValidationKey_Any           = 'N'   /* Notify task of any key */
+} wimpvalidation_k_t;
+
+/*************************************************** Gerph *********
+ Function:      validation_findcommand
+ Description:   Locate a command within a validation.
+                Locates the start of a command within the validation string supplied.
+                The index of the tag character is returned if found.
+ Parameters:    string-> ctrl-terminated string
+                tag = character tag to locate, or Validation_EnumerateAll to enumerate commands
+                lenp-> where to store the length of the command string (including command char), or NULL to ignore
+ Returns:       index of the tag, or Validation_NotFound it not found
+ ******************************************************************/
+int validation_findcommand(const char *string, char tag, int *lenp);
+
+#endif

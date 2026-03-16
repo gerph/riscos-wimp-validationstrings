@@ -1,0 +1,93 @@
+/*******************************************************************
+ * File:        validation
+ * Purpose:     Find that validation strings
+ * Author:      Gerph
+ * Date:        16 Mar 2026
+ ******************************************************************/
+
+#include <stdlib.h>
+#include "validation.h"
+
+/*************************************************** Gerph *********
+ Function:      validation_findcommand
+ Description:   Locate a command within a validation.
+                Locates the start of a command within the validation string supplied.
+                The index of the tag character is returned if found.
+ Parameters:    string-> ctrl-terminated string
+                tag = character tag to locate, or Validation_EnumerateAll to enumerate commands
+                lenp-> where to store the length of the command string (including command char), or NULL to ignore
+ Returns:       index of the tag, or Validation_NotFound it not found
+ ******************************************************************/
+int validation_findcommand(const char *string, char tag, int *lenp)
+{
+  int index;
+
+  if (string == NULL || (int)string == -1)
+    return Validation_NotFound;
+
+  tag = tag & 255;
+  if (tag >= 'a' && tag <= 'z')
+    tag -= 32;
+
+  for (index=0; string[index] >= 32; index++)
+  {
+    char c = string[index];
+
+    if (c == ';')
+        continue;
+
+    if (c >= 'a' && c <= 'z')
+      c -= 32;
+
+    if (c == tag || tag == '\0')
+    {
+      /* We have found the tag */
+      int end;
+      if (lenp == NULL)
+        return index;
+
+      /* They wanted to know the length as well, so hunt for the end */
+      for (end = index + 1;
+           string[end] >= 32 && string[end] != ';';
+           end++)
+      {
+        c = string[end];
+        if (c == '\\')
+        {
+          c = string[end + 1];
+          if (c <= 32)
+          {
+            /* Malformed validation string (should not end with an escape) */
+            break;
+          }
+          end++;
+        }
+      }
+      *lenp = end - index;
+      return index;
+    }
+
+    /* No tag found, look for separator */
+
+    for (index++;
+         string[index] >= 32 && string[index] != ';';
+         index++)
+    {
+      c = string[index];
+      if (c == '\\')
+      {
+        c = string[index + 1];
+        if (c <= 32)
+        {
+          /* Malformed validation string (should not end with an escape) */
+          return Validation_NotFound;
+        }
+        index++;
+      }
+    }
+  }
+
+  /* Tag has not been found */
+  return Validation_NotFound;
+}
+

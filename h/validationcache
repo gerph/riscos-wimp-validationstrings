@@ -1,0 +1,73 @@
+/*******************************************************************
+ * File:        validationcache
+ * Purpose:     Caching for the validation strings for icons
+ * Author:      Gerph
+ * Date:        16 Mar 2026
+ ******************************************************************/
+
+#ifndef VALIDATIONCACHE_H
+#define VALIDATIONCACHE_H
+
+#include <stdint.h>
+#include <stdbool.h>
+
+typedef uint32_t colour_t;
+typedef uint8_t wimpcolour_t;
+
+#define WimpColour_None ((wimpcolour_t)255)
+
+/* A cache structure to handle the validation string more efficiently */
+typedef struct validationcache_s {
+    /* Which fields have been parsed into the structure */
+    struct validationcache_valid_s {
+        bool allow:1;       // 'A'
+        bool unused_b:1;
+        bool colours:1;     // 'C'
+        bool display:1;     // 'D'
+        bool unused_e:1;
+        bool font:1;        // 'F'
+        bool unused_g:1;
+        bool unused_h:1;
+        bool unused_i:1;
+        bool unused_j:1;
+        bool key:1;         // 'K'
+        bool unused_l:1;
+        bool unused_m:1;
+        bool unused_n:1;
+        bool unused_o:1;
+        bool pointer:1;     // 'P'
+        bool unused_q:1;
+        bool border:1;      // 'R'
+        bool sprite:1;      // 'S'
+        bool unused_t:1;
+        bool unused_u:1;
+        bool unused_w:1;
+        bool unused_x:1;
+        bool flags:1;       // 'Y'
+        bool unused_z:1;
+    } valid;
+
+    /* Parsed values */
+    char display_char;              // Chart to print, or 0 to not print anything
+    wimpcolour_t font_wimpbg;
+    wimpcolour_t font_wimpfg;
+    char border_type;
+    wimpcolour_t border_slabin;     // WimpColour_None for the default colour
+
+    colour_t colours[6];            // FIXME: Check how many colours
+    uint32_t flags;                 // From char 'A' in bit 0
+
+    /* Offsets for fields */
+    int pointer_offset;
+    int sprite_on_offset;
+    int sprite_off_offset;
+    int key_offset;
+    int allow_offset;
+} validationcache_t;
+
+/* The 'valid' element must be a uint32_t sized item (or larger) so that we can access as a bitfield */
+struct validationcache_size_assertion {
+    char validationcache_size[sizeof(((validationcache_t*)NULL)->valid) <= sizeof(uint32_t) ? 1 : -1];
+};
+
+#endif

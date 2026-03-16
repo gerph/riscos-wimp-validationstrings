@@ -1,0 +1,110 @@
+/*******************************************************************
+ * File:        main
+ * Purpose:     WimpIconValidations command line tool
+ * Author:      Gerph
+ ******************************************************************/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "validation.h"
+
+#include "VersionNum"
+
+#define UNKNOWN (-1)
+#define SUCCESS (0)
+#define FAIL    (1)
+
+int tfc(const char *vstr, int c, const char *result)
+{
+    int state = UNKNOWN;
+    int index;
+    int len;
+    printf("Check '%s' for char %c: ", vstr, c);
+
+    index = validation_findcommand(vstr, c, &len);
+    if (index == Validation_NotFound)
+    {
+        printf("Not found");
+        if (result == NULL)
+        {
+            state = SUCCESS;
+        }
+        else
+        {
+            state = FAIL;
+            printf(" FAIL (Should have given '%s')", result);
+        }
+    }
+    else
+    {
+        printf("at index %i+%i", index, len);
+        if (result == NULL)
+        {
+            state = FAIL;
+            printf(" FAIL (should not have been found)");
+        }
+        else
+        {
+            state = SUCCESS;
+            if (strlen(result) != len)
+            {
+                state = FAIL;
+                printf(" FAIL (len should be %i)", strlen(result));
+            }
+            if (strncmp(&vstr[index], result, len) != 0)
+            {
+                state = FAIL;
+                printf(" FAIL (result was '%.*s' but should be '%s')", len, &vstr[index], result);
+            }
+        }
+    }
+    printf("\n");
+    return state;
+}
+
+int npass = 0;
+int nfail = 0;
+
+void test_findcommand(void)
+{
+    int state;
+#define TEST_FINDCOMMAND(s, c, r) \
+        state = tfc(s, c, r); \
+        if (state == SUCCESS) \
+            npass++; \
+        else \
+            nfail++;
+
+    TEST_FINDCOMMAND("Soff,on", 'S', "Soff,on");
+    TEST_FINDCOMMAND("Soff,on", 's', "Soff,on");
+    TEST_FINDCOMMAND("Soff,on", 'Y', NULL);
+    TEST_FINDCOMMAND("Soff,on;Nname", 's', "Soff,on");
+    TEST_FINDCOMMAND("Nname;Soff,on", 's', "Soff,on");
+    TEST_FINDCOMMAND("Y", 's', NULL);
+    TEST_FINDCOMMAND("Y;Soff,on", 's', "Soff,on");
+    TEST_FINDCOMMAND("Y;Soff,on", 'o', NULL);
+    TEST_FINDCOMMAND("A\\;S", 'A', "A\\;S");
+    TEST_FINDCOMMAND("A\\;S;Soff,on", 'A', "A\\;S");
+    TEST_FINDCOMMAND("A\\;S;Soff,on", 'S', "Soff,on");
+    TEST_FINDCOMMAND("", 'S', NULL);
+    TEST_FINDCOMMAND(";", 'S', NULL);
+    TEST_FINDCOMMAND(";Soff,on", 'S', "Soff,on");
+    TEST_FINDCOMMAND(";;Soff,on", 'S', "Soff,on");
+    TEST_FINDCOMMAND("Soff,on;", 'S', "Soff,on");
+    TEST_FINDCOMMAND("Soff,on;;", 'S', "Soff,on");
+    TEST_FINDCOMMAND("Soff,on;;Nfoo", 'N', "Nfoo");
+}
+
+
+int main(int argc, char *argv[])
+{
+    test_findcommand();
+
+    printf("----\n");
+    printf("Pass:  %i\n", npass);
+    printf("Fail:  %i\n", nfail);
+
+    exit(nfail ? EXIT_FAILURE : EXIT_SUCCESS);
+}
