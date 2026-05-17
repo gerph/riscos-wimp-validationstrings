@@ -146,7 +146,25 @@ validationcache_t *validationcache_create(const char *vstr)
                         break;
 
                     case WimpValidation_Line:             /* 'L': Set line spacing in OS units */
-                        /* FIXME: Not extracted yet */
+                        {
+                            int spacing = 0;
+                            if (len > 1)
+                            {
+                                while (len > 1)
+                                {
+                                    char c = *p++;
+                                    len--;
+                                    if (c >= '0' && c <= '9')
+                                    {
+                                        spacing *= 10;
+                                        spacing += c - '0';
+                                    }
+                                    else
+                                        break;
+                                }
+                            }
+                            vc->multiline_spacing = spacing;
+                        }
                         break;
 
                     case WimpValidation_Matrix:           /* 'M': Matrix operations */

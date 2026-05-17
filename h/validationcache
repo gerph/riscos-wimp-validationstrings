@@ -32,7 +32,7 @@ typedef struct validationcache_s {
         bool unused_i:1;
         bool unused_j:1;
         bool key:1;         // 'K'
-        bool unused_l:1;
+        bool line:1;        // 'L'
         bool unused_m:1;
         bool unused_n:1;
         bool unused_o:1;
@@ -55,6 +55,7 @@ typedef struct validationcache_s {
     wimpcolour_t font_wimpfg;
     char border_type;
     wimpcolour_t border_slabin;     // WimpColour_None for the default colour
+    int multiline_spacing;
 
     colour_t colours[6];            // FIXME: Check how many colours
     uint32_t flags;                 // From char 'A' in bit 0
