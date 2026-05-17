@@ -83,10 +83,10 @@ validationcache_t *validationcache_create(const char *vstr)
                                     r = 0; g = 0; b = 0;
                                     for (j = 0; j < 2; j++) {
                                         char c = hex[j];
-                                        r <<= 4;
-                                        if (c >= '0' && c <= '9') r |= (c - '0');
-                                        else if (c >= 'a' && c <= 'f') r |= (c - 'a' + 10);
-                                        else if (c >= 'A' && c <= 'F') r |= (c - 'A' + 10);
+                                        b <<= 4;
+                                        if (c >= '0' && c <= '9') b |= (c - '0');
+                                        else if (c >= 'a' && c <= 'f') b |= (c - 'a' + 10);
+                                        else if (c >= 'A' && c <= 'F') b |= (c - 'A' + 10);
                                     }
                                     for (j = 2; j < 4; j++) {
                                         char c = hex[j];
@@ -97,10 +97,10 @@ validationcache_t *validationcache_create(const char *vstr)
                                     }
                                     for (j = 4; j < 6; j++) {
                                         char c = hex[j];
-                                        b <<= 4;
-                                        if (c >= '0' && c <= '9') b |= (c - '0');
-                                        else if (c >= 'a' && c <= 'f') b |= (c - 'a' + 10);
-                                        else if (c >= 'A' && c <= 'F') b |= (c - 'A' + 10);
+                                        r <<= 4;
+                                        if (c >= '0' && c <= '9') r |= (c - '0');
+                                        else if (c >= 'a' && c <= 'f') r |= (c - 'a' + 10);
+                                        else if (c >= 'A' && c <= 'F') r |= (c - 'A' + 10);
                                     }
 
                                     vc->colours[i] = (b << 24) | (g << 16) | (r << 8);
