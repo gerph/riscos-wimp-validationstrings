@@ -162,43 +162,49 @@ validationcache_t *validationcache_create(const char *vstr)
 
                     case WimpValidation_Border:           /* 'R': Border type */
                         {
-                            char c = *p++;
-                            if (len-- > 1 && c >= '0' && c <= '9')
+                            if (len > 1)
                             {
+                                int border_type = 0;
                                 char c = *p++;
-                                int border_type = c - '0';
-                                while (len-- > 1)
+                                len--;
+                                if (c >= '0' && c <= '9')
                                 {
-                                    c = *p++;
-                                    if (c >= '0' && c <= '9')
-                                    {
-                                        border_type *= 10;
-                                        border_type += c - '0';
-                                    }
-                                    else
-                                        break;
-                                }
-                                vc->border_type = border_type;
-                                vc->border_slabin = WimpColour_None;
-
-                                if (len > 1 && c == ',')
-                                {
-                                    /* There is a second parameter, which is also a decimal */
-                                    int colour = 0;
-                                    while (len-- > 1)
+                                    border_type = c - '0';
+                                    while (len > 1)
                                     {
                                         c = *p++;
+                                        len--;
                                         if (c >= '0' && c <= '9')
                                         {
-                                            colour *= 10;
-                                            colour += c - '0';
+                                            border_type *= 10;
+                                            border_type += c - '0';
                                         }
                                         else
-                                        {
                                             break;
-                                        }
                                     }
-                                    colour = colour < 16 ? colour : WimpColour_None;
+                                    vc->border_type = border_type;
+                                    vc->border_slabin = WimpColour_None;
+
+                                    if (c == ',')
+                                    {
+                                        /* There is a second parameter, which is also a decimal */
+                                        int colour = 0;
+                                        while (len > 1)
+                                        {
+                                            c = *p++;
+                                            len--;
+                                            if (c >= '0' && c <= '9')
+                                            {
+                                                colour *= 10;
+                                                colour += c - '0';
+                                            }
+                                            else
+                                            {
+                                                break;
+                                            }
+                                        }
+                                        vc->border_slabin = colour < 16 ? colour : WimpColour_None;
+                                    }
                                 }
                             }
                         }
