@@ -10,8 +10,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include "GContext/gcontext.h"
 
-typedef uint32_t colour_t;
 typedef uint8_t wimpcolour_t;
 
 #define WimpColour_None ((wimpcolour_t)255)
