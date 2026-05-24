@@ -229,13 +229,13 @@ validationcache_t *validationcache_create(const char *vstr)
                         break;
 
                     case WimpValidation_Sprite:           /* 'S': Sprite name */
-                        vc->sprite_on_offset = p - vstr;
+                        vc->sprite_off_offset = p - vstr;
                         while (len-- > 1)
                         {
                             char c = *p++;
                             if (c == ',')
                             {
-                                vc->sprite_off_offset = p - vstr;
+                                vc->sprite_on_offset = p - vstr;
                                 break;
                             }
                             if (c=='\\')
