@@ -5,6 +5,7 @@
  * Date:        16 Mar 2026
  ******************************************************************/
 
+#include <stdint.h>
 #include <stdlib.h>
 #include "validation.h"
 
@@ -22,7 +23,7 @@ int validation_findcommand(const char *string, char tag, int *lenp)
 {
   int index;
 
-  if (string == NULL || (int)string == -1)
+  if (string == NULL || (((uint32_t)string) & 0xFFFFFFFF) == 0xFFFFFFFF)
     return Validation_NotFound;
 
   tag = tag & 255;
